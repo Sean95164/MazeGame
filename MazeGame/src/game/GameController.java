@@ -161,6 +161,14 @@ public class GameController {
         return currentMazeSeed;
     }
 
+    public int getMazeRows() {
+        return state.getRows();
+    }
+
+    public int getMazeCols() {
+        return state.getCols();
+    }
+
     public void loadGameData(int level, int playerX, int playerY, long mazeSeed) {
         state.setCurrentLevel(level);
         state.setRows(state.getInitialRows() + (level - 1) * 2);

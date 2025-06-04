@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import javax.swing.*;
 import Main.App;
+import util.AudioPlayer;
 
 public class LoginPanel extends JPanel {
 
@@ -99,10 +100,10 @@ public class LoginPanel extends JPanel {
         settingButton.addActionListener(e -> {
             JPanel settingPanel = new JPanel();
             settingPanel.setLayout(new GridLayout(2, 2, 10, 10));
-            settingPanel.add(new JLabel("Maze Width:"));
+            settingPanel.add(new JLabel("Maze Width (Rows):"));
             JTextField widthField = new JTextField(String.valueOf(App.getMazeWidth()));
             settingPanel.add(widthField);
-            settingPanel.add(new JLabel("Maze Height:"));
+            settingPanel.add(new JLabel("Maze Height (Cols):"));
             JTextField heightField = new JTextField(String.valueOf(App.getMazeHeight()));
             settingPanel.add(heightField);
 

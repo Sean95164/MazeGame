@@ -3,6 +3,7 @@ package Main;
 import game.Continue;
 import game.GameController;
 import gui.LoginPanel;
+import util.AudioPlayer;
 import java.awt.Container;
 import javax.swing.*;
 import java.io.BufferedReader;
@@ -52,10 +53,13 @@ public class App {
     public static void main(String[] args) {
         loadConfig(); // Call loadConfig() at the start of the main method
 
+        AudioPlayer audioPlayer = new AudioPlayer();
+        audioPlayer.playLoop("audio/music.mp3"); // Play background music
+
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Maze Game");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            System.out.println(MAZE_HEIGHT + " " + MAZE_WIDTH);
+            // System.out.println(MAZE_HEIGHT + " " + MAZE_WIDTH); // print size for debugging
             GameController game = new GameController(MAZE_WIDTH, MAZE_HEIGHT, frame);
             JPanel gamePanel = game.getGamePanel();
 
@@ -71,7 +75,7 @@ public class App {
             loginPanelHolder[0].showModeSelect();
 
             loginPanelHolder[0].getContinueButton().addActionListener(e -> {
-                Continue.SaveData save = Continue.loadGame();
+                Continue.SaveData save = Continue.loadGame(MAZE_WIDTH, MAZE_HEIGHT);
                 if (save != null) {
                     game.loadGameData(save.level, save.playerX, save.playerY, save.mazeSeed);
                     switchPanel(frame, loginPanelHolder[0], gamePanel);
@@ -88,7 +92,9 @@ public class App {
                         game.getCurrentLevel(),
                         game.getPlayerX(),
                         game.getPlayerY(),
-                        game.getCurrentMazeSeed()
+                        game.getCurrentMazeSeed(),
+                        game.getMazeRows(),
+                        game.getMazeCols()
                 );
                 JOptionPane.showMessageDialog(frame, "存檔成功！", "提示", JOptionPane.INFORMATION_MESSAGE);
             });
