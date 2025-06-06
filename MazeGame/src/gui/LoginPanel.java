@@ -1,20 +1,23 @@
 package gui;
 
+import Main.App;
 import java.awt.*;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.function.BiConsumer;
 import javax.swing.*;
-import Main.App;
-import util.AudioPlayer;
 
 public class LoginPanel extends JPanel {
 
     private Runnable onNewGameAction;
     private final JButton continueButton;
     private final JButton newGameButton;
+    private final JButton multiplayerButton;
+    private BiConsumer<String, String> onMultiplayerModeSelectedAction;
 
-    public LoginPanel(Runnable onNewGameAction) {
+    public LoginPanel(Runnable onNewGameAction, BiConsumer<String, String> onMultiplayerModeSelectedAction) {
         this.onNewGameAction = onNewGameAction;
+        this.onMultiplayerModeSelectedAction = onMultiplayerModeSelectedAction;
         // 設置佈局管理器為 BoxLayout，垂直排列
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
         setBackground(new Color(245, 245, 220)); // 米色背景
@@ -50,6 +53,29 @@ public class LoginPanel extends JPanel {
         // 添加按鈕之間的間隔
         add(Box.createRigidArea(new Dimension(0, 20))); // 垂直間隔
 
+        // "MULTIPLE" 按鈕
+        multiplayerButton = new JButton("MULTIPLE");
+        styleButton(multiplayerButton);
+        multiplayerButton.addActionListener(e -> {
+            if (onMultiplayerModeSelectedAction != null) {
+                onMultiplayerModeSelectedAction.accept("localhost", "7777");
+            } else {
+                JOptionPane.showMessageDialog(this, "請先啟動伺服器，再點選多人模式！", "提示", JOptionPane.INFORMATION_MESSAGE);
+            }
+        });
+        add(multiplayerButton);
+
+        // 添加按鈕之間的間隔
+        add(Box.createRigidArea(new Dimension(0, 20))); // 垂直間隔
+
+        // 新增音樂控制按鈕
+        JButton audioButton = new JButton("AUDIO");
+        styleButton(audioButton);
+        audioButton.addActionListener(e -> {
+            JOptionPane.showMessageDialog(this, "背景音樂會自動播放，若要暫停請關閉遊戲視窗。", "Audio Info", JOptionPane.INFORMATION_MESSAGE);
+        });
+        add(audioButton);
+
         // 添加底部空白間隔
         add(Box.createVerticalGlue());
 
@@ -68,6 +94,10 @@ public class LoginPanel extends JPanel {
     // 如果需要，可以添加獲取按鈕的方法，以便在外部添加監聽器
     public JButton getContinueButton() {
         return continueButton;
+    }
+
+    public JButton getMultiplayerButton() {
+        return multiplayerButton;
     }
 
     public void showLoginOptions() {
@@ -98,7 +128,14 @@ public class LoginPanel extends JPanel {
         JButton settingButton = new JButton("SETTING");
         styleButton(settingButton);
         settingButton.addActionListener(e -> {
-            SettingPanel settingPanel = new SettingPanel(App.getMazeWidth(), App.getMazeHeight());
+            JPanel settingPanel = new JPanel();
+            settingPanel.setLayout(new GridLayout(2, 2, 10, 10));
+            settingPanel.add(new JLabel("Maze Width:"));
+            JTextField widthField = new JTextField(String.valueOf(App.getMazeWidth()));
+            settingPanel.add(widthField);
+            settingPanel.add(new JLabel("Maze Height:"));
+            JTextField heightField = new JTextField(String.valueOf(App.getMazeHeight()));
+            settingPanel.add(heightField);
 
             int result = JOptionPane.showConfirmDialog(
                     this,
@@ -110,24 +147,24 @@ public class LoginPanel extends JPanel {
 
             if (result == JOptionPane.OK_OPTION) {
                 try {
-                    int mazeWidth = settingPanel.getMazeWidth();
-                    int mazeHeight = settingPanel.getMazeHeight();
+                    int mazeWidth = Integer.parseInt(widthField.getText());
+                    int mazeHeight = Integer.parseInt(heightField.getText());
 
+                    // Write updated values to config.txt
                     try (FileWriter writer = new FileWriter("src/environment/config.txt")) {
                         writer.write("MAZE_WIDTH=" + mazeWidth + "\n");
                         writer.write("MAZE_HEIGHT=" + mazeHeight + "\n");
                     }
 
-                    App.setMazeWidth(mazeWidth);
-                    App.setMazeHeight(mazeHeight);
-//                    JOptionPane.showMessageDialog(
-//                            this,
-//                            "Settings updated successfully! Please restart the game for changes to take effect.",
-//                            "Restart Required",
-//                            JOptionPane.WARNING_MESSAGE
-//                    );
-//
-//                    System.exit(0);
+                    // Show restart message
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Settings updated successfully! Please restart the game for changes to take effect.",
+                            "Restart Required",
+                            JOptionPane.WARNING_MESSAGE
+                    );
+
+                    System.exit(0); // Forcefully close the application
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(this, "Invalid input. Please enter valid integers.", "Error", JOptionPane.ERROR_MESSAGE);
                 } catch (IOException ex) {
@@ -160,7 +197,55 @@ public class LoginPanel extends JPanel {
         add(Box.createRigidArea(new Dimension(0, 20)));
         JButton multiButton = new JButton("MULTIPLE");
         styleButton(multiButton);
+        multiButton.addActionListener(e -> showMultiplayerOptions());
         add(multiButton);
+        add(Box.createVerticalGlue());
+        setPreferredSize(new Dimension(1062, 694));
+        revalidate();
+        repaint();
+    }
+
+    public void showMultiplayerOptions() {
+        this.removeAll();
+        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setBackground(new Color(245, 245, 220));
+        add(Box.createVerticalGlue());
+        JLabel titleLabel = new JLabel("MULTIPLAYER");
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 36));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        add(titleLabel);
+        add(Box.createRigidArea(new Dimension(0, 50)));
+
+        JButton serverButton = new JButton("START SERVER");
+        styleButton(serverButton);
+        serverButton.addActionListener(e -> {
+            if (onMultiplayerModeSelectedAction != null) {
+                onMultiplayerModeSelectedAction.accept("server", null);
+            }
+        });
+        add(serverButton);
+        add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JButton clientButton = new JButton("CONNECT TO SERVER");
+        styleButton(clientButton);
+        clientButton.addActionListener(e -> {
+            if (onMultiplayerModeSelectedAction != null) {
+                String host = JOptionPane.showInputDialog(this, "Enter server IP address:", "localhost");
+                if (host != null && !host.trim().isEmpty()) {
+                    onMultiplayerModeSelectedAction.accept("client", host.trim());
+                } else if (host != null) {
+                    JOptionPane.showMessageDialog(this, "IP address cannot be empty.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        });
+        add(clientButton);
+        add(Box.createRigidArea(new Dimension(0, 20)));
+
+        JButton backButton = new JButton("BACK");
+        styleButton(backButton);
+        backButton.addActionListener(e -> showModeSelect());
+        add(backButton);
+
         add(Box.createVerticalGlue());
         setPreferredSize(new Dimension(1062, 694));
         revalidate();

@@ -7,6 +7,8 @@ import javax.swing.*;
 import model.Cell;
 import model.MazeGenerator;
 import model.Player;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MazeGame {
     private MazePanel mazePanel;
@@ -39,8 +41,12 @@ public class MazeGame {
             (bestTime == Integer.MAX_VALUE ? "-" : bestTime + " sec"));
         timerLabel.setFont(new Font("Arial", Font.BOLD, 16));
         
+        // 包裝成 Map<Integer, Player>
+        Map<Integer, Player> singlePlayerMap = new HashMap<>();
+        singlePlayerMap.put(1, player);
+        
         // Initialize panel
-        mazePanel = new MazePanel(maze, player, timerLabel);
+        mazePanel = new MazePanel(maze, singlePlayerMap, timerLabel);
         
         // Create main panel with timer at bottom
         mainPanel = new JPanel(new BorderLayout());
@@ -83,8 +89,12 @@ public class MazeGame {
         timerLabel.setText("Level: " + currentLevel + " | Time: 0 sec | Best: " + 
             (bestTime == Integer.MAX_VALUE ? "-" : bestTime + " sec"));
         
+        // 包裝成 Map<Integer, Player>
+        Map<Integer, Player> singlePlayerMap = new HashMap<>();
+        singlePlayerMap.put(1, player);
+        
         // Create new maze panel
-        MazePanel newMazePanel = new MazePanel(maze, player, timerLabel);
+        MazePanel newMazePanel = new MazePanel(maze, singlePlayerMap, timerLabel);
         mainPanel.remove(mainPanel.getComponent(0)); // Remove old maze panel
         mainPanel.add(newMazePanel, BorderLayout.CENTER);
         mazePanel = newMazePanel;
@@ -112,10 +122,15 @@ public class MazeGame {
     }
 
     private void setupKeyListener() {
+        // 先移除所有舊的 keyListener，避免重複
+        for (KeyListener kl : mazePanel.getKeyListeners()) {
+            mazePanel.removeKeyListener(kl);
+        }
         mazePanel.setFocusable(true);
         mazePanel.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
+                System.out.println("[DEBUG] keyPressed: " + e.getKeyCode());
                 movePlayer(e.getKeyCode());
             }
         });
@@ -172,4 +187,4 @@ public class MazeGame {
     public JPanel getMazePanel() {
         return mainPanel;
     }
-} 
+}

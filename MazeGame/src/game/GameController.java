@@ -7,8 +7,12 @@ import javax.swing.*;
 import model.Cell;
 import model.MazeGenerator;
 import model.Player;
+import util.AudioPlayer;
+import java.util.HashMap;
+import java.util.Map;
 
 public class GameController {
+    private AudioPlayer audioPlayer;
     private GameState state;
     private GameUI ui;
     private Player player;
@@ -18,10 +22,16 @@ public class GameController {
     private JFrame frame;
     private long currentMazeSeed;
 
-    public GameController(int initialRows, int initialCols, JFrame frame) {
+    public GameController(int initialRows, int initialCols, JFrame frame, AudioPlayer audioPlayer) {
         this.frame = frame;
+        this.audioPlayer = audioPlayer;
         state = new GameState(initialRows, initialCols);
         initializeGame();
+    }
+
+    // 保留原本建構子（for 多人模式或相容性）
+    public GameController(int initialRows, int initialCols, JFrame frame) {
+        this(initialRows, initialCols, frame, null);
     }
 
     private void initializeGame() {
@@ -35,8 +45,14 @@ public class GameController {
         // Initialize player
         player = new Player(1, 1);
         
-        // Initialize UI
-        ui = new GameUI(maze, player, state);
+        Map<Integer, Player> singlePlayerMap = new HashMap<>();
+        singlePlayerMap.put(1, player);
+        if (audioPlayer != null) {
+            ui = new GameUI(maze, player, state, audioPlayer);
+        } else {
+            ui = new GameUI(maze, player, state);
+        }
+        ui.updateMazePanel(maze, singlePlayerMap);
         
         // Setup controls
         setupKeyListener();
@@ -99,8 +115,16 @@ public class GameController {
     private void handleLevelComplete() {
         timer.stop();
         state.updateBestTime(state.getSeconds());
-        
-        if (ui.showLevelCompleteDialog()) {
+        // 修正：showLevelCompleteDialog 不再回傳 boolean，僅顯示對話框，需自行判斷是否繼續
+        int choice = JOptionPane.showConfirmDialog(ui.getMazePanel(),
+            String.format("Level %d Complete!\nTime: %d seconds\nBest Time: %s\n\nContinue to next level?",
+                state.getCurrentLevel(),
+                state.getSeconds(),
+                state.getBestTime() == Integer.MAX_VALUE ? "-" : state.getBestTime() + " sec"),
+            "Level Complete!",
+            JOptionPane.YES_NO_OPTION,
+            JOptionPane.INFORMATION_MESSAGE);
+        if (choice == JOptionPane.YES_OPTION) {
             startNextLevel();
         } else {
             System.exit(0);
@@ -122,7 +146,9 @@ public class GameController {
         state.resetTimer();
         
         // Update UI
-        ui.updateMazePanel(maze, player);
+        Map<Integer, Player> singlePlayerMap = new HashMap<>();
+        singlePlayerMap.put(1, player);
+        ui.updateMazePanel(maze, singlePlayerMap);
         setupKeyListener();
         // Restart timer
         timer.start();
@@ -161,14 +187,6 @@ public class GameController {
         return currentMazeSeed;
     }
 
-    public int getMazeRows() {
-        return state.getRows();
-    }
-
-    public int getMazeCols() {
-        return state.getCols();
-    }
-
     public void loadGameData(int level, int playerX, int playerY, long mazeSeed) {
         state.setCurrentLevel(level);
         state.setRows(state.getInitialRows() + (level - 1) * 2);
@@ -181,9 +199,10 @@ public class GameController {
         player.setPosition(playerX, playerY);
         
         state.resetTimer();
-        
-        ui.updateMazePanel(maze, player);
+        Map<Integer, Player> singlePlayerMap = new HashMap<>();
+        singlePlayerMap.put(1, player);
+        ui.updateMazePanel(maze, singlePlayerMap);
         setupKeyListener();
         timer.start();
     }
-} 
+}

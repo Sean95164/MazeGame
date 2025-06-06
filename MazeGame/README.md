@@ -398,67 +398,57 @@ java -cp src Main.App
         // ... existing code ...
         ```
 
-## 2024-更新紀錄
+## 開發者快速指令：重新編譯、清空 bin/、打包與啟動
 
-// （本區塊內容已移除，因視窗自動調整功能已取消）
+### 1. 清空 bin/ 目錄（移除所有 .class 檔案）
+Windows PowerShell：
+```powershell
+Remove-Item -Recurse -Force bin\*.class
+```
+或（若有子資料夾）
+```powershell
+Remove-Item -Recurse -Force bin\*
+```
 
-## 最新更新
+### 2. 重新編譯所有 Java 原始碼
 
-### `Main.App.java` 程式碼重構
+#### PowerShell 寫法（推薦）
+```powershell
+$files = Get-ChildItem -Recurse -Filter *.java src | ForEach-Object { $_.FullName }
+javac -cp "lib/gson-2.10.1.jar;src" -d bin $files
+```
 
-本次更新針對 `src/Main.App.java` 進行了以下重構，旨在提高程式碼的可讀性、可維護性並減少重複：
+#### 或直接寫死所有子資料夾（PowerShell/CMD 通用）
+```powershell
+javac -cp "lib/gson-2.10.1.jar;src" -d bin src\Main\*.java src\game\*.java src\gui\*.java src\model\*.java src\net\*.java
+```
 
-1.  **定義常數取代魔法數字**：
-    將程式碼中硬編碼的迷宮尺寸（`21, 21`）和視窗大小（`1062, 694`）提取為 `final static` 常數 `MAZE_WIDTH`, `MAZE_HEIGHT`, `FRAME_WIDTH`, 和 `FRAME_HEIGHT`。這使得程式碼更易於理解和修改。
+#### CMD（命令提示字元）也可用：
+```cmd
+javac -cp "lib/gson-2.10.1.jar;src" -d bin src\Main\*.java src\game\*.java src\gui\*.java src\model\*.java src\net\*.java
+```
 
-2.  **重構面板切換邏輯**：
-    將重複的 Swing 面板切換邏輯（`contentPane.remove()`, `contentPane.add()`, `revalidate()`, `repaint()`）提取到一個新的私有靜態方法 `switchPanel(JFrame frame, JPanel panelToRemove, JPanel panelToAdd)` 中。現在，在 `switchAction`、`CONTINUE` 按鈕事件和「返回 Menu」按鈕事件中都統一呼叫此方法，大大減少了程式碼的重複性，提高了程式碼的清晰度。
+> **注意：** PowerShell 不支援 `src/**/*.java` 這種萬用字元展開，請勿直接複製 bash 教學的寫法。
+
+### 3. 重新打包 MazeGame.jar
+```powershell
+jar cfe MazeGame.jar Main.App -C bin .
+```
+
+### 4. 啟動伺服器（Server）
+```powershell
+java -cp "lib/gson-2.10.1.jar;MazeGame.jar" net.GameServer
+```
+
+### 5. 啟動主程式（App.java，單人/多人入口）
+```powershell
+java -cp "lib/gson-2.10.1.jar;MazeGame.jar" Main.App
+```
 
 ---
 
-## 修正遊戲關卡載入問題
-
-本次更新解決了玩家從遊戲中存檔並返回主選單後，再點擊「繼續」會導致遊戲關卡跳過頭的問題。此問題主要源於 `GameController` 物件在返回選單時未重置狀態，且「繼續」邏輯誤用 `startNextLevel()` 逐步推進關卡。
-
-**修改內容：**
-
-1.  **`src/game/GameState.java`：**
-    *   新增 `initialRows` 和 `initialCols` 欄位，用於儲存遊戲初始迷宮尺寸。
-    *   新增 `setCurrentLevel()`, `setRows()`, `setCols()`, `getInitialRows()`, `getInitialCols()` 等方法，以支援對遊戲狀態的精確控制。
-
-2.  **`src/game/GameController.java`：**
-    *   新增 `loadGameData(int level, int playerX, int playerY)` 方法。此方法負責根據傳入的關卡和玩家座標，精確地設定遊戲的當前關卡、迷宮尺寸，並重新生成迷宮、設定玩家位置、重置計時器及更新 UI。這確保了載入的遊戲狀態與存檔完全一致。
-
-3.  **`src/Main.App.java`：**
-    *   修改了 `CONTINUE` 按鈕的事件處理邏輯，將原先重複呼叫 `game.startNextLevel()` 的方式，替換為直接呼叫 `game.loadGameData(save.level, save.playerX, save.playerY)`。這使得遊戲在載入存檔時能夠直接跳轉到正確的關卡和玩家位置。
-
-這些修改確保了遊戲狀態在載入時能夠正確且精確地恢復，避免了關卡推進錯誤的問題。
-
----
-
-## 修正載入存檔後迷宮地圖變化問題
-
-本次更新解決了玩家在遊戲中存檔後，重新載入遊戲時迷宮地圖會變化的問題。此問題的根源在於迷宮生成是基於隨機數，但之前的存檔並未記錄生成迷宮時所使用的隨機數種子，導致每次載入時都會生成一個新的迷宮。
-
-**修改內容：**
-
-1.  **`src/game/Continue.java`：**
-    *   `SaveData` 類別新增 `mazeSeed` 欄位，用於儲存迷宮生成時的隨機數種子。
-    *   `saveGame` 方法修改為接受並儲存 `mazeSeed`。
-    *   `loadGame` 方法修改為讀取 `mazeSeed` 並傳遞給 `SaveData` 建構函式。
-
-2.  **`src/model/MazeGenerator.java`：**
-    *   新增一個接受 `long seed` 參數的建構函式，允許使用特定種子初始化隨機數產生器，確保迷宮的可重現性。
-    *   新增 `getSeed()` 方法，用於獲取當前生成迷宮所使用的種子。
-
-3.  **`src/game/GameController.java`：**
-    *   新增 `currentMazeSeed` 欄位，用於儲存當前迷宮的種子。
-    *   在 `initializeGame()` 和 `startNextLevel()` 方法中，儲存 `MazeGenerator` 生成的種子。
-    *   新增 `getCurrentMazeSeed()` 方法，供外部獲取當前迷宮種子。
-    *   `loadGameData` 方法修改為使用從存檔中讀取的 `mazeSeed` 來初始化 `MazeGenerator`，從而生成與存檔時相同的迷宮。
-
-4.  **`src/Main.App.java`：**
-    *   在 `SAVE` 按鈕事件處理中，從 `GameController` 取得 `currentMazeSeed` 並傳遞給 `Continue.saveGame`。
-    *   在 `CONTINUE` 按鈕事件處理中，從 `Continue.loadGame` 取得 `mazeSeed` 並傳遞給 `game.loadGameData`。
-
-這些修改確保了迷宮在遊戲載入時能夠完全重現，提供了更一致的遊戲體驗。
+- 多人模式請先啟動伺服器，再於主程式選擇「MULTIPLE」啟動 client。
+- 若要直接啟動 client 測試：
+```powershell
+java -cp "lib/gson-2.10.1.jar;MazeGame.jar" Main.AppClient localhost
+```

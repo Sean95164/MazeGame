@@ -4,23 +4,29 @@ import java.awt.*;
 import javax.swing.*;
 import model.Cell;
 import model.Player;
+import java.util.Map;
 
 public class MazePanel extends JPanel {
     private final Cell[][] maze;
-    private Player player;
+    private Map<Integer, Player> players;
     private static final int CELL_SIZE = 12; // Small cells for complex maze
     private static final int PLAYER_SIZE = 8; // Size for player and finish point
 
-    public MazePanel(Cell[][] maze, Player player, JLabel timerLabel) {
+    public MazePanel(Cell[][] maze, Map<Integer, Player> players, JLabel timerLabel) {
         this.maze = maze;
-        this.player = player;
+        this.players = players;
         setBackground(Color.WHITE);
+        setFocusable(true); // 確保可以取得鍵盤焦點
+        setPreferredSize(new Dimension(
+            Math.max(maze[0].length * CELL_SIZE, 900),
+            Math.max(maze.length * CELL_SIZE, 600)
+        )); // 最小900x600
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
-        Graphics2D g2d = (Graphics2D) g;
+        Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         // Draw maze
@@ -36,14 +42,23 @@ public class MazePanel extends JPanel {
             }
         }
 
-        // Draw player
-        g2d.setColor(Color.RED);
-        g2d.fillOval(
-            player.getX() * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE)/2,
-            player.getY() * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE)/2,
-            PLAYER_SIZE,
-            PLAYER_SIZE
-        );
+        // Draw all players
+        if (players != null) {
+            // 依 playerId 指定顏色，1=紅, 2=藍, 3=紫, 4=橘, 5=青, 6=粉
+            Color[] playerColors = {Color.RED, Color.BLUE, Color.MAGENTA, Color.ORANGE, Color.CYAN, Color.PINK};
+            for (Map.Entry<Integer, Player> entry : players.entrySet()) {
+                Player p = entry.getValue();
+                int id = entry.getKey();
+                Color c = playerColors[(id-1) % playerColors.length];
+                g2d.setColor(c);
+                g2d.fillOval(
+                    p.getX() * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE)/2,
+                    p.getY() * CELL_SIZE + (CELL_SIZE - PLAYER_SIZE)/2,
+                    PLAYER_SIZE,
+                    PLAYER_SIZE
+                );
+            }
+        }
 
         // Draw finish point
         g2d.setColor(Color.GREEN);
@@ -62,4 +77,4 @@ public class MazePanel extends JPanel {
             maze.length * CELL_SIZE
         );
     }
-} 
+}

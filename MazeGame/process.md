@@ -347,7 +347,8 @@ game.getGameUI().getBackToMenuButton().addActionListener(e -> {
 ### 1. 編譯所有原始碼
 在專案根目錄下執行：
 ```bash
-javac -d bin src/Main.App.java src/game/*.java src/gui/*.java src/model/*.java
+// ... existing code ...
+javac -d bin src/Main/App.java src/game/*.java src/gui/*.java src/model/*.java
 ```
 - `-d bin` 代表編譯後的 .class 檔案會放到 bin 目錄。
 - 確保 bin 目錄已存在，否則請先建立：`mkdir bin`

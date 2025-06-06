@@ -1,5 +1,10 @@
 package game;
 
+import java.util.HashMap;
+import java.util.Map;
+import model.Player;
+import model.Cell;
+
 public class GameState {
     private int currentLevel;
     private int seconds;
@@ -10,6 +15,10 @@ public class GameState {
     private int initialCols;
     private static final int MAX_ROWS = 61;
     private static final int MAX_COLS = 91;
+    private Map<Integer, Player> players = new HashMap<>();
+    private Map<Integer, Integer> scores = new HashMap<>();
+    private int winnerId = 0;
+    private Cell[][] maze;
 
     public GameState(int initialRows, int initialCols) {
         this.currentLevel = 1;
@@ -62,4 +71,27 @@ public class GameState {
     public int getCols() { return cols; }
     public int getInitialRows() { return initialRows; }
     public int getInitialCols() { return initialCols; }
-} 
+
+    // --- Multiplayer/GameServer/RemoteGameController support ---
+    public Map<Integer, Player> getPlayers() {
+        return players;
+    }
+    public Map<Integer, Integer> getScores() {
+        return scores;
+    }
+    public void addPoint(int playerId) {
+        scores.put(playerId, scores.getOrDefault(playerId, 0) + 1);
+    }
+    public int getWinnerId() {
+        return winnerId;
+    }
+    public void setWinnerId(int id) {
+        winnerId = id;
+    }
+    public void setMaze(Cell[][] maze) {
+        this.maze = maze;
+    }
+    public Cell[][] getMaze() {
+        return maze;
+    }
+}
