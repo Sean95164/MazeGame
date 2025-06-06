@@ -36,8 +36,8 @@ public class App {
             }
         } catch (IOException | NumberFormatException e) {
             System.err.println("Failed to load configuration file: " + e.getMessage());
-            MAZE_WIDTH = 21; // Default value
-            MAZE_HEIGHT = 21; // Default value
+            MAZE_WIDTH = 21;
+            MAZE_HEIGHT = 21;
         }
     }
 
@@ -49,58 +49,81 @@ public class App {
         return MAZE_HEIGHT;
     }
 
+    public static void setMazeWidth(int width) {
+        MAZE_WIDTH = width;
+    }
+
+    public static void setMazeHeight(int height) {
+        MAZE_HEIGHT = height;
+    }
 
     public static void main(String[] args) {
-        loadConfig(); // Call loadConfig() at the start of the main method
+        loadConfig();
 
         AudioPlayer audioPlayer = new AudioPlayer();
-        audioPlayer.playLoop("audio/music.mp3"); // Play background music
+        audioPlayer.playLoop("audio/music.mp3");
 
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Maze Game");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            // System.out.println(MAZE_HEIGHT + " " + MAZE_WIDTH); // print size for debugging
-            GameController game = new GameController(MAZE_WIDTH, MAZE_HEIGHT, frame);
-            JPanel gamePanel = game.getGamePanel();
 
+            final GameController[] gameHolder = new GameController[1];
+            final JPanel[] gamePanelHolder = new JPanel[1];
             final LoginPanel[] loginPanelHolder = new LoginPanel[1];
+
             Runnable switchAction = () -> {
-                switchPanel(frame, loginPanelHolder[0], gamePanel);
-                SwingUtilities.invokeLater(() -> {
-                    game.getUiMazePanel().requestFocusInWindow();
+                gameHolder[0] = new GameController(MAZE_WIDTH, MAZE_HEIGHT, frame);
+                gamePanelHolder[0] = gameHolder[0].getGamePanel();
+                switchPanel(frame, loginPanelHolder[0], gamePanelHolder[0]);
+                SwingUtilities.invokeLater(() -> gameHolder[0].getUiMazePanel().requestFocusInWindow());
+
+                // 註冊遊戲內按鈕事件
+                gameHolder[0].getGameUI().getSaveButton().addActionListener(e -> {
+                    Continue.saveGame(
+                            gameHolder[0].getCurrentLevel(),
+                            gameHolder[0].getPlayerX(),
+                            gameHolder[0].getPlayerY(),
+                            gameHolder[0].getCurrentMazeSeed(),
+                            gameHolder[0].getMazeRows(),
+                            gameHolder[0].getMazeCols()
+                    );
+                    JOptionPane.showMessageDialog(frame, "存檔成功！", "提示", JOptionPane.INFORMATION_MESSAGE);
                 });
+
+                gameHolder[0].getGameUI().getBackToMenuButton().addActionListener(e -> switchPanel(frame, gamePanelHolder[0], loginPanelHolder[0]));
             };
 
             loginPanelHolder[0] = new LoginPanel(switchAction);
             loginPanelHolder[0].showModeSelect();
 
             loginPanelHolder[0].getContinueButton().addActionListener(e -> {
+                gameHolder[0] = new GameController(MAZE_WIDTH, MAZE_HEIGHT, frame);
+                gamePanelHolder[0] = gameHolder[0].getGamePanel();
                 Continue.SaveData save = Continue.loadGame(MAZE_WIDTH, MAZE_HEIGHT);
                 if (save != null) {
-                    game.loadGameData(save.level, save.playerX, save.playerY, save.mazeSeed);
-                    switchPanel(frame, loginPanelHolder[0], gamePanel);
+                    gameHolder[0].loadGameData(save.level, save.playerX, save.playerY, save.mazeSeed);
+                    switchPanel(frame, loginPanelHolder[0], gamePanelHolder[0]);
                     SwingUtilities.invokeLater(() -> {
-                        game.getUiMazePanel().requestFocusInWindow();
+                        gameHolder[0].getUiMazePanel().requestFocusInWindow();
                     });
-                } else {
-                    JOptionPane.showMessageDialog(frame, "沒有存檔可繼續，請先開始新遊戲！", "提示", JOptionPane.INFORMATION_MESSAGE);
+
+                    // 註冊遊戲內按鈕事件
+                    gameHolder[0].getGameUI().getSaveButton().addActionListener(e2 -> {
+                        Continue.saveGame(
+                                gameHolder[0].getCurrentLevel(),
+                                gameHolder[0].getPlayerX(),
+                                gameHolder[0].getPlayerY(),
+                                gameHolder[0].getCurrentMazeSeed(),
+                                gameHolder[0].getMazeRows(),
+                                gameHolder[0].getMazeCols()
+                        );
+                        JOptionPane.showMessageDialog(frame, "存檔成功！", "提示", JOptionPane.INFORMATION_MESSAGE);
+                    });
+
+                    gameHolder[0].getGameUI().getBackToMenuButton().addActionListener(e2 -> {
+                        switchPanel(frame, gamePanelHolder[0], loginPanelHolder[0]);
+                    });
                 }
-            });
-
-            game.getGameUI().getSaveButton().addActionListener(e -> {
-                Continue.saveGame(
-                        game.getCurrentLevel(),
-                        game.getPlayerX(),
-                        game.getPlayerY(),
-                        game.getCurrentMazeSeed(),
-                        game.getMazeRows(),
-                        game.getMazeCols()
-                );
-                JOptionPane.showMessageDialog(frame, "存檔成功！", "提示", JOptionPane.INFORMATION_MESSAGE);
-            });
-
-            game.getGameUI().getBackToMenuButton().addActionListener(e -> {
-                switchPanel(frame, gamePanel, loginPanelHolder[0]);
             });
 
             frame.add(loginPanelHolder[0]);

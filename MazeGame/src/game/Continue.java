@@ -34,10 +34,15 @@ public class Continue {
                 if (line.startsWith("width=")) width = Integer.parseInt(line.substring(6));
                 if (line.startsWith("height=")) height = Integer.parseInt(line.substring(7));
             }
+            if (width == 0 || height == 0) {
+                JOptionPane.showMessageDialog(null, "沒有存檔可繼續，請先開始新遊戲！", "提示", JOptionPane.INFORMATION_MESSAGE);
+                return null;
+            }
             if (width != currentRows || height != currentCols) {
                 JOptionPane.showMessageDialog(null, "存檔的迷宮尺寸 (" + width + ", " + height + ") 與目前設定不符！", "錯誤", JOptionPane.ERROR_MESSAGE);
                 return null;
             }
+
             return new SaveData(level, x, y, mazeSeed);
         } catch (Exception e) {
             System.err.println("Error loading game: " + e.getMessage());
