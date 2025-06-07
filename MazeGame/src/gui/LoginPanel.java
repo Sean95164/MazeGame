@@ -8,7 +8,7 @@ import java.util.function.BiConsumer;
 import javax.swing.*;
 
 public class LoginPanel extends JPanel {
-
+    private ImageIcon backgroundImage;
     private Runnable onNewGameAction;
     private final JButton continueButton;
     private final JButton newGameButton;
@@ -80,8 +80,17 @@ public class LoginPanel extends JPanel {
         add(Box.createVerticalGlue());
 
         setPreferredSize(new Dimension(1062, 694)); // 與遊戲面板大小一致
+
+        backgroundImage = new ImageIcon(getClass().getResource("/image/background.png")); // 或 background.jpg
     }
 
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage.getImage(), 0, 0, getWidth(), getHeight(), this);
+        }
+    }
     // 輔助方法來設置按鈕樣式
     private void styleButton(JButton button) {
         button.setFont(new Font("SansSerif", Font.PLAIN, 18));

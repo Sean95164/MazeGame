@@ -1,12 +1,17 @@
 package gui;
 
 import java.awt.*;
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import model.Cell;
 import model.Player;
+
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.Map;
 
 public class MazePanel extends JPanel {
+    private BufferedImage backgroundImage;
     private final Cell[][] maze;
     private Map<Integer, Player> players;
     private static final int CELL_SIZE = 12; // Small cells for complex maze
@@ -21,11 +26,20 @@ public class MazePanel extends JPanel {
             Math.max(maze[0].length * CELL_SIZE, 900),
             Math.max(maze.length * CELL_SIZE, 600)
         )); // 最小900x600
+
+        try {
+            backgroundImage = ImageIO.read(getClass().getResource("/image/background.png"));
+        } catch (IOException e) {
+            System.err.println("無法載入背景圖片: " + e.getMessage());
+        }
     }
 
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
+        if (backgroundImage != null) {
+            g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), this);
+        }
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
