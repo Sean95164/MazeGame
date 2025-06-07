@@ -9,6 +9,7 @@ import util.AudioPlayer;
 import java.util.Map;
 
 public class GameUI {
+    private int lastLevel = 1;
     private AudioPlayer audioPlayer; // 新增
     private JButton audioButton;     // 新增
     private JPanel mainPanel;
@@ -157,16 +158,24 @@ public class GameUI {
         }
     }
 
-    // 新增：網路同步用方法，根據 snap 和 myId 更新 UI（如分數、迷宮、玩家位置等）
-    public void updateFromNetwork(game.GameState snap, int myId) {
-        System.out.println("[DEBUG] updateFromNetwork called for myId=" + myId);
+    // ─── 改寫 updateFromNetwork ─────────────────────────────
+    public void updateFromNetwork(GameState snap, int myId) {
         updateScoreLabel(snap.getScores());
-        timerLabel.setText(String.format("Level: %d | Time: %d sec | Best: %s",
-            snap.getCurrentLevel(),
-            snap.getSeconds(),
-            snap.getBestTime() == Integer.MAX_VALUE ? "-" : snap.getBestTime() + " sec"));
-        updateMazePanel(snap.getMaze(), snap.getPlayers());
-        mazePanel.requestFocusInWindow();
+        timerLabel.setText(String.format(
+            "Level: %d | Time: %d sec | Best: %s",
+            snap.getCurrentLevel(), snap.getSeconds(),
+            snap.getBestTime()==Integer.MAX_VALUE? "-" : snap.getBestTime()+" sec"));
+
+        // ① 沒換關 → 只換 players，省掉重建與焦點遺失
+        if (snap.getCurrentLevel() == lastLevel) {
+            mazePanel.setPlayers(snap.getPlayers());
+            mazePanel.repaint();
+        }
+        // ② 換關 → 重建 MazePanel；鍵盤稍後由 RemoteGameController 重新安裝
+        else {
+            updateMazePanel(snap.getMaze(), snap.getPlayers());
+            lastLevel = snap.getCurrentLevel();
+        }
     }
 
     public MazePanel getMazePanel() { return mazePanel; }

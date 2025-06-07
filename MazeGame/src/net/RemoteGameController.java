@@ -13,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import javax.swing.*;
 
 public class RemoteGameController {
+    private int currentLevel = 1;
     private final Socket socket;
     private final DataOutputStream out;
     private final DataInputStream  in;
@@ -127,11 +128,11 @@ public class RemoteGameController {
                         // ⏳ Only now we build the UI
                         ui = new GameUI(
                             snap.getMaze(),
-                            null, // 不再只傳自己
+                            null,          // 不再只傳自己
                             snap,
-                            true // 多人模式
+                            true           // 多人模式
                         );
-
+                        currentLevel = snap.getCurrentLevel();  // ★ 記下當前關卡
                         ui.updateScoreLabel(snap.getScores());
                         installKeyBindings();
                         ready.countDown();
@@ -139,7 +140,16 @@ public class RemoteGameController {
     
                     // wait until UI is ready before updating it
                     if (latchReleased) {
-                        SwingUtilities.invokeLater(() -> ui.updateFromNetwork(snap, myId));
+                        final int levelFromServer = snap.getCurrentLevel();   // 暫存避免 lambda 捕到舊值
+                        SwingUtilities.invokeLater(() -> {
+                            ui.updateFromNetwork(snap, myId);
+                    
+                            // ★ 如果偵測到關卡變了 → 重新安裝 key bindings
+                            if (levelFromServer != currentLevel) {
+                                currentLevel = levelFromServer;
+                                installKeyBindings();
+                            }
+                        });
                     }
                 }
             } catch (IOException e) {

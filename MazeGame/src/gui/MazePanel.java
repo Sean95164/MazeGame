@@ -83,6 +83,13 @@ public class MazePanel extends JPanel {
             PLAYER_SIZE
         );
     }
+    
+    public void setPlayers(Map<Integer,Player> players){
+        this.players = players;
+    }
+    public Cell[][] getMaze(){           // GameUI 要判斷是否真的換圖
+        return maze;
+    }
 
     @Override
     public Dimension getPreferredSize() {

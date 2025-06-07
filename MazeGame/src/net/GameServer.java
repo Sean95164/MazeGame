@@ -5,7 +5,10 @@ import game.GameState;
 import model.Cell;
 import model.MazeGenerator;
 import model.Player;
-
+// ─── imports 加一行 ─────────────────────────────────────────
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -28,7 +31,7 @@ public class GameServer {
     // ─── Config ────────────────────────────────────────────────────────────────
     private static final int PORT        = 7777;
     private static final int MAX_PLAYERS = 2;
-
+    private final ScheduledExecutorService tick = Executors.newSingleThreadScheduledExecutor();
     // ─── Core state & helpers ──────────────────────────────────────────────────
     private final GameState       state   = new GameState(11, 21);
     private final MazeGenerator generator = new MazeGenerator(state.getRows(), state.getCols());
@@ -43,6 +46,13 @@ public class GameServer {
 
     public GameServer() {
         state.setMaze(generator.generate());
+        // 每 1 秒累加遊戲秒數並廣播
+        tick.scheduleAtFixedRate(() -> {
+            synchronized (state) {        // 避免寫入衝突
+                state.incrementTimer();
+                broadcastState();
+            }
+        }, 1, 1, TimeUnit.SECONDS);
     }
 
     private void run() throws IOException {
