@@ -1,4 +1,6 @@
-level=1
-playerX=9
-playerY=7
-mazeSeed=2746458289000
+level=3
+playerX=1
+playerY=3
+mazeSeed=514176419522600
+width=11
+height=15

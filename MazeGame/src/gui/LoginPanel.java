@@ -128,14 +128,7 @@ public class LoginPanel extends JPanel {
         JButton settingButton = new JButton("SETTING");
         styleButton(settingButton);
         settingButton.addActionListener(e -> {
-            JPanel settingPanel = new JPanel();
-            settingPanel.setLayout(new GridLayout(2, 2, 10, 10));
-            settingPanel.add(new JLabel("Maze Width:"));
-            JTextField widthField = new JTextField(String.valueOf(App.getMazeWidth()));
-            settingPanel.add(widthField);
-            settingPanel.add(new JLabel("Maze Height:"));
-            JTextField heightField = new JTextField(String.valueOf(App.getMazeHeight()));
-            settingPanel.add(heightField);
+            SettingPanel settingPanel = new SettingPanel(App.getMazeWidth(), App.getMazeHeight());
 
             int result = JOptionPane.showConfirmDialog(
                     this,
@@ -147,24 +140,17 @@ public class LoginPanel extends JPanel {
 
             if (result == JOptionPane.OK_OPTION) {
                 try {
-                    int mazeWidth = Integer.parseInt(widthField.getText());
-                    int mazeHeight = Integer.parseInt(heightField.getText());
+                    int mazeWidth = settingPanel.getMazeWidth();
+                    int mazeHeight = settingPanel.getMazeHeight();
 
-                    // Write updated values to config.txt
                     try (FileWriter writer = new FileWriter("src/environment/config.txt")) {
                         writer.write("MAZE_WIDTH=" + mazeWidth + "\n");
                         writer.write("MAZE_HEIGHT=" + mazeHeight + "\n");
                     }
 
-                    // Show restart message
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Settings updated successfully! Please restart the game for changes to take effect.",
-                            "Restart Required",
-                            JOptionPane.WARNING_MESSAGE
-                    );
+                    App.setMazeWidth(mazeWidth);
+                    App.setMazeHeight(mazeHeight);
 
-                    System.exit(0); // Forcefully close the application
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(this, "Invalid input. Please enter valid integers.", "Error", JOptionPane.ERROR_MESSAGE);
                 } catch (IOException ex) {

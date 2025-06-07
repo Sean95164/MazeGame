@@ -10,6 +10,7 @@ import model.Player;
 import util.AudioPlayer;
 import java.util.HashMap;
 import java.util.Map;
+import Main.App;
 
 public class GameController {
     private AudioPlayer audioPlayer;
@@ -181,6 +182,14 @@ public class GameController {
 
     public int getPlayerY() {
         return player.getY();
+    }
+
+    public int getMazeRows() {
+        return state.getRows();
+    }
+
+    public int getMazeCols() {
+        return state.getCols();
     }
 
     public long getCurrentMazeSeed() {
